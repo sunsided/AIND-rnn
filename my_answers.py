@@ -1,3 +1,5 @@
+import string
+
 import numpy as np
 
 from keras.models import Sequential
@@ -6,41 +8,62 @@ from keras.layers import LSTM
 import keras
 
 
-# TODO: fill out the function below that transforms the input series 
-# and window-size into a set of input/output pairs for use with our RNN model
 def window_transform_series(series, window_size):
+    input_i = range(0, len(series) - window_size)
+    output_i = range(window_size, len(series))
+
     # containers for input/output pairs
-    X = []
-    y = []
+    X = [series[i:i+window_size] for i in input_i]
+    y = [series[i] for i in output_i]
 
     # reshape each 
     X = np.asarray(X)
     X.shape = (np.shape(X)[0:2])
     y = np.asarray(y)
-    y.shape = (len(y),1)
+    y.shape = (len(y), 1)
 
-    return X,y
+    return X, y
 
-# TODO: build an RNN to perform regression on our time series input/output data
+
+# noinspection PyPep8Naming
 def build_part1_RNN(window_size):
-    pass
+    model = Sequential()
+    model.add(LSTM(5, input_shape=(window_size, 1), return_sequences=False))
+    model.add(Dense(1))
+    return model
 
 
-### TODO: return the text input with only ascii lowercase and the punctuation given below included.
 def cleaned_text(text):
     punctuation = ['!', ',', '.', ':', ';', '?']
+    whitespace = [' ']
+    extra_keep = ['é', 'è', 'â', 'à', '-', '"', "'"]
 
-    return text
+    keep = set(punctuation)
+    # keep.update(extra_keep)           # disallowed by rubrik
+    # keep.update(string.ascii_letters) # rejected by udacity-pa
+    # keep.update(string.digits)        # rejected by udacity-pa
+    # keep.update(string.whitespace)    # rejected by udacity-pa
+    keep.update(whitespace)
+    keep.update(string.ascii_lowercase)
 
-### TODO: fill out the function below that transforms the input text and window-size into a set of input/output pairs for use with our RNN model
+    return ''.join((t for t in text if t in keep))
+
+
 def window_transform_text(text, window_size, step_size):
     # containers for input/output pairs
     inputs = []
     outputs = []
 
-    return inputs,outputs
+    for i in range(0, len(text)-window_size, step_size):
+        inputs.append(text[i:i+window_size])
+        outputs.append(text[i+window_size])
 
-# TODO build the required RNN model: 
-# a single LSTM hidden layer with softmax activation, categorical_crossentropy loss 
+    return inputs, outputs
+
+
+# a single LSTM hidden layer with softmax activation, categorical_crossentropy loss
 def build_part2_RNN(window_size, num_chars):
-    pass
+    model = Sequential()
+    model.add(LSTM(200, input_shape=(window_size, num_chars), return_sequences=False))
+    model.add(Dense(num_chars, activation='softmax'))
+    return model
